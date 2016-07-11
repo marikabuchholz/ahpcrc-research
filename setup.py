@@ -30,8 +30,8 @@ module load openmpi/1.6.5/intel13sp1up1
     string +="""
 
 rm -rf *out
-/home/rehnd/qe-tddft/bin/pw.x < $PREFIX.pw-in > $PREFIX.pw-out
-/home/rehnd/qe-tddft/multi-k-tddft/bin/tddft.x < $PREFIX.tddft-in > $PREFIX.tddft-out
+/home/marikab/qe-tddft/bin/pw.x < $PREFIX.pw-in > $PREFIX.pw-out
+/home/marikab/qe-tddft/multi-k-tddft/bin/tddft.x < $PREFIX.tddft-in > $PREFIX.tddft-out
 """
     return string
 
