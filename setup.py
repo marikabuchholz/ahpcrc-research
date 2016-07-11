@@ -60,8 +60,7 @@ mpirun -np 8 /home/marikab/ce-tddft-master/bin/tddft.x < $PREFIX.tddft-in > $PRE
 for np in nproc:
     procdir = str(np) + 'procs'
     if not os.path.exists(procdir):
-        os.system('mkdir ' + procdir) #makes a directory for number of processors - only make it if it doesn't a\
-lready exist                                                                                                     
+        os.system('mkdir ' + procdir) #makes a directory for number of processors - only make it if it doesn't already exist                                                                                                     
     os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir                              
     f = open(str(np) + 'procs' + fname, "w")
     f.write(tddft_sbatch(np))
