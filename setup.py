@@ -6,7 +6,6 @@ nproc = [1, 2, 4, 8, 16, 32]
 dt = 0.5
 nsteps = 1000
 pseudodir = '/home/marikab/qe-tddft/pseudo'
-fname = '16atoms_results.txt'
 
 def getshellscript(method, nk, dt, prefix, timehours):
     string = """#!/bin/bash 
@@ -62,15 +61,19 @@ for np in nproc:
     if not os.path.exists(procdir):
         os.system('mkdir ' + procdir) #makes a directory for number of processors - only make it if it doesn't already exist                                                                                                     
     os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir                              
-    f = open(str(np) + 'procs' + fname, "w")
+    os.system('cd /home/marikab/' + procdir)
+    method = '16atoms' + str(np) + 'proc'
+    f = open(method + '.txt', "w")
     f.write(tddft_sbatch(np))
-
+    os.system('cp ' + method + '.txt' + ' ' + procdir)
+    f.close()
     tps = 0.25 #time per solve                                                                                   
     timehours = min(48, int(numpy.ceil(tps*nsteps/3600.)))
-
-    method = '16atoms' + str(np) + 'proc'
+    os.system('cp /home/marikab/graphene/tddft.sbatch /home/marikab/' + procdir + '/tddft.sbatch')
+    fname = procdir + '/tddft.sbatch'
+    f = open(fname, "w")
     f.write(getshellscript(method, 1, dt, 'graphene', str(timehours)))
     f.close()
-    os.system('chmod u+x ' + procdir + ' /home/marikab/graphene/tddft.sbatch*')
+    os.system('chmod u+x ' + procdir + ' /home/marikab/' + fname)
     os.system('cat /home/marikab/graphene/graphene.tddft-out | grep -A 4 PW | awk \'{print $4}\'')
     os.system('cat /home/marikab/graphene/graphene.tddft-out | grep -A 4 PW | awk \'{print $7}\'')
