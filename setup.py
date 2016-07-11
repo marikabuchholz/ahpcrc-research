@@ -58,16 +58,20 @@ mpirun -np 8 /home/marikab/ce-tddft-master/bin/tddft.x < $PREFIX.tddft-in > $PRE
     return string
 
 for np in nproc:
-    procdir = str(np) + 'procs' 
-    os.system('mkdir ' + procdir) #makes a directory for number of processors 
-    os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir
-    f = open(str(np) + fname, "w")
+    procdir = str(np) + 'procs'
+    if not os.path.exists(procdir):
+        os.system('mkdir ' + procdir) #makes a directory for number of processors - only make it if it doesn't a\
+lready exist                                                                                                     
+    os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir                              
+    f = open(str(np) + 'procs' + fname, "w")
     f.write(tddft_sbatch(np))
 
-    tps = 0.25 #time per solve
-    timehours = min(48, int(numpy.ceil(tps*nsteps/3600.))) 
+    tps = 0.25 #time per solve                                                                                   
+    timehours = min(48, int(numpy.ceil(tps*nsteps/3600.)))
 
     method = '16atoms' + str(np) + 'proc'
-    f.write(getshellscript(method, 1, dt, 'graphene', str(timehours))) 
+    f.write(getshellscript(method, 1, dt, 'graphene', str(timehours)))
     f.close()
-    os.system('chmod u+x ' + procdir + ' tddft.sbatch')
+    os.system('chmod u+x ' + procdir + ' /home/marikab/graphene/tddft.sbatch*')
+    os.system('cat /home/marikab/graphene/graphene.tddft-out | grep -A 4 PW | awk \'{print $4}\'')
+    os.system('cat /home/marikab/graphene/graphene.tddft-out | grep -A 4 PW | awk \'{print $7}\'')
