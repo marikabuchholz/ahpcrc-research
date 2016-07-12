@@ -6,33 +6,7 @@ nproc = [1, 2, 4, 8, 16, 32]
 dt = 0.5
 nsteps = 1000
 pseudodir = '/home/marikab/qe-tddft/pseudo'
-
-def getshellscript(method, nk, dt, prefix, timehours):
-    string = """#!/bin/bash 
-
-#SBATCH --job-name="""
-    string += method + '-k'+str(nk) + '-dt' + str(dt) + "\n"
-    string += """#SBATCH --output=cn-tddft.out
-#SBATCH --error=cn-tddft.err
-#SBATCH --time="""
-    string += str(int(timehours)) + """:00:00
-#SBATCH --qos=normal
-#SBATCH --nodes=1
-#SBATCH --mem=4000
-#SBATCH --ntasks-per-node=16
-
-#now run normal batch commands
-module load openmpi/1.6.5/intel13sp1up1
-
-"""
-    string += "PREFIX=" + prefix
-    string +="""
-
-rm -rf *out
-/home/marikab/qe-tddft/bin/pw.x < $PREFIX.pw-in > $PREFIX.pw-out
-/home/marikab/qe-tddft/multi-k-tddft/bin/tddft.x < $PREFIX.tddft-in > $PREFIX.tddft-out
-"""
-    return string
+prefix = 'graphene'
 
 def tddft_sbatch(nproc): 
     string = """#!/bin/bash                                                                                      
@@ -51,29 +25,35 @@ def tddft_sbatch(nproc):
 PREFIX=graphene
 
 rm -rf *out
-mpirun -np 8 /home/marikab/espresso-5.2.0/PW/src/pw.x < $PREFIX.pw-in > $PREFIX.pw-out
-mpirun -np 8 /home/marikab/ce-tddft-master/bin/tddft.x < $PREFIX.tddft-in > $PREFIX.tddft-out
+mpirun -np $NP $PW_PATHpw.x < $PREFIX.pw-in > $PREFIX.pw-out
+mpirun -np $NP $TDDFT_PATHtddft.x < $PREFIX.tddft-in > $PREFIX.tddft-out
 """
     return string
 
-for np in nproc:
+change_path = raw_input("Change path to pw/tddft files? 1 for yes, 0 for no: ")
+if change_path == "1":
+    pw_path = raw_input("New pw path: ")
+    tddft_path = raw_input("New tddft path: ")
+else:
+    pw_path = '/home/marikab/espresso-5.2.0/PW/src/'
+    tddft_path = '/home/marikab/ce-tddft-master/bin/'
+
+for np in nproc:        
     procdir = str(np) + 'procs'
     if not os.path.exists(procdir):
-        os.system('mkdir ' + procdir) #makes a directory for number of processors - only make it if it doesn't already exist                                                                                                     
-    os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir                              
+        os.system('mkdir ' + procdir) #makes a directory for number of processors 
+
+    os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir
     os.system('cd /home/marikab/' + procdir)
     method = '16atoms' + str(np) + 'proc'
-    f = open(method + '.txt', "w")
+    f = open(method + '.txt', "w") 
     f.write(tddft_sbatch(np))
     os.system('cp ' + method + '.txt' + ' ' + procdir)
     f.close()
-    tps = 0.25 #time per solve                                                                                   
+    tps = 0.25 #time per solve
     timehours = min(48, int(numpy.ceil(tps*nsteps/3600.)))
-    os.system('cp /home/marikab/graphene/tddft.sbatch /home/marikab/' + procdir + '/tddft.sbatch')
+
     fname = procdir + '/tddft.sbatch'
-    f = open(fname, "w")
-    f.write(getshellscript(method, 1, dt, 'graphene', str(timehours)))
-    f.close()
-    os.system('chmod u+x ' + procdir + ' /home/marikab/' + fname)
-    os.system('cat /home/marikab/graphene/graphene.tddft-out | grep -A 4 PW | awk \'{print $4}\'')
-    os.system('cat /home/marikab/graphene/graphene.tddft-out | grep -A 4 PW | awk \'{print $7}\'')
+    os.system('cp /home/marikab/graphene/tddft.sbatch /home/marikab/' + fname)
+    os.system('chmod u+x ' + procdir + ' /home/marikab/' + fname) 
+    os.system('cat /home/marikab/graphene/graphene.pw-out | grep PWSCF | awk \'/PWSCF/{i++}i==3{print $3}\'')
