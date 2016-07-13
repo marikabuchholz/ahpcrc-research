@@ -5,13 +5,12 @@ import numpy
 nproc = [1, 2, 4, 8, 16, 32]
 dt = 0.5
 nsteps = 1000
-pseudodir = '/home/marikab/qe-tddft/pseudo'
 prefix = 'graphene'
 
-def tddft_sbatch(nproc): 
+def tddft_sbatch(np): 
     string = """#!/bin/bash                                                                                      
 #SBATCH --job-name=long-run-"""
-    string+= str(nproc)
+    string+= str(np)
     string+="""
 #SBATCH --output=cn-tddft.out                                                                   
 #SBATCH --error=cn-tddft.err                                                                    
@@ -42,18 +41,37 @@ for np in nproc:
     procdir = str(np) + 'procs'
     if not os.path.exists(procdir):
         os.system('mkdir ' + procdir) #makes a directory for number of processors 
-
+    else:
+        os.system('rm -r ' + procdir)
+        print "removed"
+        os.system('mkdir ' + procdir) 
     os.system('cp ./graphene/graphene.pw-in procdir') #copies pw-in file to procdir
-    os.system('cd /home/marikab/' + procdir)
+    os.system('cd ~/' + procdir)
     method = '16atoms' + str(np) + 'proc'
     f = open(method + '.txt', "w") 
     f.write(tddft_sbatch(np))
-    os.system('cp ' + method + '.txt' + ' ' + procdir)
+
+    os.system('mv ' + method + '.txt' + ' ' + '~/' + procdir)
     f.close()
     tps = 0.25 #time per solve
     timehours = min(48, int(numpy.ceil(tps*nsteps/3600.)))
 
     fname = procdir + '/tddft.sbatch'
-    os.system('cp /home/marikab/graphene/tddft.sbatch /home/marikab/' + fname)
-    os.system('chmod u+x ' + procdir + ' /home/marikab/' + fname) 
+    os.system('cp /home/marikab/graphene/tddft.sbatch ~/' + fname)
+    os.system('chmod u+x ' + procdir + ' ~/' + fname) 
     os.system('cat /home/marikab/graphene/graphene.pw-out | grep PWSCF | awk \'/PWSCF/{i++}i==3{print $3}\'')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
