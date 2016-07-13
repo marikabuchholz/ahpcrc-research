@@ -22,6 +22,9 @@ def tddft_sbatch(np):
 ##SBATCH --mpi=pmi2
                                                                              
 PREFIX=graphene
+NP="""
+    string+=str(np)
+    string+="""
 
 rm -rf *out
 mpirun -np $NP $PW_PATHpw.x < $PREFIX.pw-in > $PREFIX.pw-out
