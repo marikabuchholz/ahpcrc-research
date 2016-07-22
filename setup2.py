@@ -5,11 +5,11 @@ import numpy
 import input_files
 
 #removes procdirs from previous runs
-all_procs = [1, 2, 4, 8, 16, 32]
-for np in all_procs:
-    procdir = 'np%02d'% np
-    if os.path.exists(procdir):
-        os.system('rm -r ' + procdir)
+def removeDirs(nproc):
+    for np in nproc:
+        procdir = 'np%02d'% np
+        if os.path.exists(procdir):
+            os.system('rm -r ' + procdir)
 
 def createDirs(prefix, pwdir, tddir, nproc, methods):
     for np in nproc:
@@ -43,6 +43,13 @@ def createDirs(prefix, pwdir, tddir, nproc, methods):
         
     return 0
 
+def runparallel(prefix, pwdir, tddir, nproc, methods):
+    for np in nproc:
+        npdir = 'np%02d'% np
+        for method in methods:
+            fname ='tddft.sbatch'
+            os.system('cd ' + npdir + ' && sbatch ' + fname)
+
 if __name__ == '__main__':
     prefix = 'graphene'
     pwdir = '/home/marikab/espresso/bin'
@@ -52,12 +59,13 @@ if __name__ == '__main__':
     methods = ['cn']
     nproc = [1, 2, 4, 8, 16, 32]
 
-
     if len(sys.argv) > 1:
         if sys.argv[1] == 'default':
+            removeDirs(nproc)
             createDirs(prefix, pwdir, tddir, nproc, methods)
-        #if sys.argv[1] == 'parallel':
-            #runparallel(prefix, pwdir, tddir, nproc, methods)
+        if sys.argv[1] == 'parallel':
+            runparallel(prefix, pwdir, tddir, nproc, methods)
     else:
         print("Usage:\n\tpython setup.py <option>")
         print("\t\t<option> = default, parallel")
+
